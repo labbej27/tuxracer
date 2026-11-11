@@ -68,19 +68,65 @@
 #endif /* defined( WIN32 ) */
 
 #if defined( WIN32 )
-#  define CONFIG_DIR "config"
+#  define CONFIG_DIR "TuxRacer"
 #  define CONFIG_FILE "options.txt"
 #else
 #  define CONFIG_DIR ".tuxracer"
 #  define CONFIG_FILE "options"
 #endif /* defined( WIN32 ) */
 
-#ifndef DATA_DIR
-#  if defined( WIN32 )
-#    define DATA_DIR "."
-#  else
-#    define DATA_DIR "/usr/local/share/tuxracer"
-#  endif /* defined( WIN32 ) */
+/* SDL2 port: the data directory is looked up at run time next to the
+   executable ("data" folder; Contents/Resources/data in a macOS bundle) */
+static char default_data_dir[BUFF_LEN];
+
+static char *get_default_data_dir()
+{
+    char *base;
+
+    if ( default_data_dir[0] != '\0' ) {
+	return default_data_dir;
+    }
+    base = SDL_GetBasePath();
+    if ( base != NULL ) {
+	snprintf( default_data_dir, sizeof( default_data_dir ), 
+		  "%sdata", base );
+	SDL_free( base );
+    }
+    if ( base == NULL || !dir_exists( default_data_dir ) ) {
+#ifdef DATA_DIR
+	snprintf( default_data_dir, sizeof( default_data_dir ), "%s", DATA_DIR );
+#else
+	snprintf( default_data_dir, sizeof( default_data_dir ), "data" );
+#endif
+    }
+    return default_data_dir;
+}
+
+/* Called after the configuration file has been read: an options file
+   written by another copy of the game may point to a stale location */
+void fix_data_dir()
+{
+    if ( !dir_exists( getparam_data_dir() ) ) {
+	setparam_data_dir( get_default_data_dir() );
+    }
+}
+
+#if !defined( WIN32 )
+static const char *get_home_dir()
+{
+    struct passwd *pwent;
+    const char *home = getenv( "HOME" );
+
+    if ( home != NULL && home[0] != '\0' ) {
+	return home;
+    }
+    pwent = getpwuid( getuid() );
+    if ( pwent == NULL ) {
+	perror( "getpwuid" );
+	return NULL;
+    }
+    return pwent->pw_dir;
+}
 #endif
 
 /* Identifies the parameter type */
@@ -114,26 +160,26 @@ struct param {
  */
 
 #define INIT_PARAM( nam, val, typename, commnt ) \
-   Params. ## nam ## .loaded = False; \
-   Params. ## nam ## .name = #nam; \
-   Params. ## nam ## .deflt. ## typename ## _val  = val; \
-   Params. ## nam ## .comment = commnt;
+   Params.nam.loaded = False; \
+   Params.nam.name = #nam; \
+   Params.nam.deflt.typename ## _val  = val; \
+   Params.nam.comment = commnt;
 
 #define INIT_PARAM_STRING( nam, val, commnt ) \
    INIT_PARAM( nam, val, string, commnt ); \
-   Params. ## nam ## .type = PARAM_STRING;
+   Params.nam.type = PARAM_STRING;
 
 #define INIT_PARAM_CHAR( nam, val, commnt ) \
    INIT_PARAM( nam, val, char, commnt ); \
-   Params. ## nam ## .type = PARAM_CHAR;
+   Params.nam.type = PARAM_CHAR;
 
 #define INIT_PARAM_INT( nam, val, commnt ) \
    INIT_PARAM( nam, val, int, commnt ); \
-   Params. ## nam ## .type = PARAM_INT;
+   Params.nam.type = PARAM_INT;
 
 #define INIT_PARAM_BOOL( nam, val, commnt ) \
    INIT_PARAM( nam, val, bool, commnt ); \
-   Params. ## nam ## .type = PARAM_BOOL;
+   Params.nam.type = PARAM_BOOL;
 
 
 /*
@@ -310,13 +356,13 @@ void set_param_bool( struct param *p, bool_t new_val )
  */
 #define FN_PARAM( name, typename, type ) \
     type getparam_ ## name() { \
-        if ( !Params. ## name ## .loaded ) { \
-            fetch_param_ ## typename( &( Params. ## name ) ); \
+        if ( !Params.name.loaded ) { \
+            fetch_param_ ## typename( &( Params.name ) ); \
         } \
-        return Params. ## name ## .val. ## typename ## _val; \
+        return Params.name.val.typename ## _val; \
     } \
     void setparam_ ## name( type val) { \
-        set_param_ ## typename( &( Params. ## name ), val ); } 
+        set_param_ ## typename( &( Params.name ), val ); } 
 
 #define FN_PARAM_STRING( name ) \
     FN_PARAM( name, string, char* )
@@ -425,7 +471,7 @@ static struct params Params;
 void init_game_configuration()
 {
     INIT_PARAM_STRING( 
-	data_dir, DATA_DIR, 
+	data_dir, get_default_data_dir(), 
 	"# The location of the Tux Racer data files" );
 
     INIT_PARAM_BOOL( 
@@ -812,19 +858,16 @@ int get_old_config_file_name( char *buff, int len )
     strcpy( buff, OLD_CONFIG_FILE );
     return 0;
 #else
-    struct passwd *pwent;
+    const char *home = get_home_dir();
 
-    pwent = getpwuid( getuid() );
-    if ( pwent == NULL ) {
-	perror( "getpwuid" );
+    if ( home == NULL ) {
+	return 1;
+    }
+    if ( strlen( home ) + strlen( OLD_CONFIG_FILE ) + 2 > len ) {
 	return 1;
     }
 
-    if ( strlen( pwent->pw_dir ) + strlen( OLD_CONFIG_FILE ) + 2 > len ) {
-	return 1;
-    }
-
-    sprintf( buff, "%s/%s", pwent->pw_dir, OLD_CONFIG_FILE );
+    sprintf( buff, "%s/%s", home, OLD_CONFIG_FILE );
     return 0;
 #endif /* defined( WIN32 ) */
 }
@@ -832,25 +875,35 @@ int get_old_config_file_name( char *buff, int len )
 int get_config_dir_name( char *buff, int len )
 {
 #if defined( WIN32 ) 
-    if ( strlen( CONFIG_DIR ) +1 > len ) {
+    /* %APPDATA%\TuxRacer (created by SDL if needed) */
+    char *pref = SDL_GetPrefPath( "", CONFIG_DIR );
+    size_t n;
+
+    if ( pref == NULL ) {
 	return 1;
     }
-    strcpy( buff, CONFIG_DIR );
+    if ( strlen( pref ) + 1 > len ) {
+	SDL_free( pref );
+	return 1;
+    }
+    strcpy( buff, pref );
+    SDL_free( pref );
+    n = strlen( buff );
+    if ( n > 0 && ( buff[n-1] == '\\' || buff[n-1] == '/' ) ) {
+	buff[n-1] = '\0';
+    }
     return 0;
 #else
-    struct passwd *pwent;
+    const char *home = get_home_dir();
 
-    pwent = getpwuid( getuid() );
-    if ( pwent == NULL ) {
-	perror( "getpwuid" );
+    if ( home == NULL ) {
+	return 1;
+    }
+    if ( strlen( home ) + strlen( CONFIG_DIR) + 2 > len ) {
 	return 1;
     }
 
-    if ( strlen( pwent->pw_dir ) + strlen( CONFIG_DIR) + 2 > len ) {
-	return 1;
-    }
-
-    sprintf( buff, "%s/%s", pwent->pw_dir, CONFIG_DIR );
+    sprintf( buff, "%s/%s", home, CONFIG_DIR );
     return 0;
 #endif /* defined( WIN32 ) */
 }

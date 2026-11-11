@@ -30,6 +30,7 @@ extern "C"
 void init_game_configuration();
 void read_config_file();
 void write_config_file();
+void fix_data_dir();
 void clear_config_cache();
 void register_game_config_callbacks( Tcl_Interp *ip );
 int get_config_dir_name( char *buff, int len );

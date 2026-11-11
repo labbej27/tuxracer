@@ -2,3 +2,5 @@ upstream/
 deps/
 build*/
 dist/
+deps-prefix/
+*.log

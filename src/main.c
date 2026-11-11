@@ -157,6 +157,7 @@ int main( int argc, char **argv )
     /* Setup the configuration variables and read the ~/.tuxracer/options file */
     init_game_configuration();
     read_config_file();
+    fix_data_dir();
 
     /* Set up the debugging modes */
     init_debug();

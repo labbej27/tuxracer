@@ -91,16 +91,26 @@
 #if defined( COMPILER_IS_UNIX_COMPATIBLE )
 #   include <unistd.h>
 #   include <sys/types.h>
-#   include <pwd.h>
+#   if !defined( WIN32 )
+#      include <pwd.h>
+#   endif
 #   include <dirent.h>
 #   include <sys/time.h>
 #   include <sys/types.h>
 #   include <dirent.h>
 #endif
 
-/* OpenGL */
-#include <GL/gl.h>
-#include <GL/glu.h>
+#if defined( WIN32 ) && defined( __MINGW32__ )
+#  include <direct.h>
+#endif
+
+/* OpenGL (SDL_opengl.h picks the right headers and provides glext.h) */
+#include "SDL_opengl.h"
+#if defined( __APPLE__ )
+#  include <OpenGL/glu.h>
+#else
+#  include <GL/glu.h>
+#endif
 
 #ifdef HAVE_GL_GLX_H
 #   include <GL/glx.h>

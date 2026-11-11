@@ -45,15 +45,7 @@ extern "C"
    recent gl.h's do.  However, versions of Mesa as recent as 3.2.1
    don't do this, so we have to work around it.
 */
-#undef GL_EXT_compiled_vertex_array
-
-/* Shouldn't need to include glext.h if gl.h is recent, but alas we can't
- * count on that...  */
-#include <GL/glext.h>
-
-#if !defined(GL_GLEXT_VERSION) || GL_GLEXT_VERSION < 6
-#   error "*** You need a more recent copy of glext.h.  You can get one at http://oss.sgi.com/projects/ogl-sample/ABI/glext.h ; it goes in /usr/include/GL. ***"
-#endif
+/* SDL2 port: glext.h comes from SDL_opengl.h (included by tuxracer.h) */
 
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT_p;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT_p;

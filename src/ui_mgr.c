@@ -35,7 +35,7 @@ static hash_table_t mouse_up_cbs;
 static hash_table_t widget_draw_cbs;
 static bool_t initialized = False;
 static bool_t needs_redraw = True;
-static char key_buffer[12]; /* enough to hold a pointer in hex */
+static char key_buffer[32]; /* enough to hold a 64-bit pointer in hex */
 static point2d_t cursor_pos = { 0, 0 };
 static bool_t left_mouse_button_down = False;
 static bool_t middle_mouse_button_down = False;

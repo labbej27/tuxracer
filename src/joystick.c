@@ -48,7 +48,7 @@ void init_joystick()
 	return;
     }
 
-    js_name = (char*) SDL_JoystickName( 0 );
+    js_name = (char*) SDL_JoystickNameForIndex( 0 );
 
     print_debug( DEBUG_JOYSTICK, "Using joystick `%s'", js_name );
 

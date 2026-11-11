@@ -78,6 +78,9 @@ void init_audio()
 	    handle_error( 1, "Couldn't initialize SDL: %s", SDL_GetError() );
 	}
 
+	/* SDL2_mixer: load the module player (the music files are .it) */
+	Mix_Init( MIX_INIT_MOD );
+
 	/* Open the audio device */
 	switch (getparam_audio_freq_mode()) {
 	case 0:

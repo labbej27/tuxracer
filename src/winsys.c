@@ -36,7 +36,72 @@
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
 
-static SDL_Surface *screen = NULL;
+static SDL_Window *window = NULL;
+static SDL_GLContext gl_context = NULL;
+
+/* SDL2 port: translate an SDL2 keycode into the key numbering used by the
+   game (ASCII below 256, WSK_* special keys at 256 and above). */
+static unsigned int translate_key( SDL_Keycode sym )
+{
+    if ( sym > 0 && sym < 256 ) {
+	return (unsigned int) sym;
+    }
+    switch ( sym ) {
+    case SDLK_KP_0: return WSK_KP0;
+    case SDLK_KP_1: return WSK_KP1;
+    case SDLK_KP_2: return WSK_KP2;
+    case SDLK_KP_3: return WSK_KP3;
+    case SDLK_KP_4: return WSK_KP4;
+    case SDLK_KP_5: return WSK_KP5;
+    case SDLK_KP_6: return WSK_KP6;
+    case SDLK_KP_7: return WSK_KP7;
+    case SDLK_KP_8: return WSK_KP8;
+    case SDLK_KP_9: return WSK_KP9;
+    case SDLK_KP_PERIOD: return WSK_KP_PERIOD;
+    case SDLK_KP_DIVIDE: return WSK_KP_DIVIDE;
+    case SDLK_KP_MULTIPLY: return WSK_KP_MULTIPLY;
+    case SDLK_KP_MINUS: return WSK_KP_MINUS;
+    case SDLK_KP_PLUS: return WSK_KP_PLUS;
+    case SDLK_KP_ENTER: return WSK_KP_ENTER;
+    case SDLK_KP_EQUALS: return WSK_KP_EQUALS;
+    case SDLK_UP: return WSK_UP;
+    case SDLK_DOWN: return WSK_DOWN;
+    case SDLK_RIGHT: return WSK_RIGHT;
+    case SDLK_LEFT: return WSK_LEFT;
+    case SDLK_INSERT: return WSK_INSERT;
+    case SDLK_HOME: return WSK_HOME;
+    case SDLK_END: return WSK_END;
+    case SDLK_PAGEUP: return WSK_PAGEUP;
+    case SDLK_PAGEDOWN: return WSK_PAGEDOWN;
+    case SDLK_F1: return WSK_F1;
+    case SDLK_F2: return WSK_F2;
+    case SDLK_F3: return WSK_F3;
+    case SDLK_F4: return WSK_F4;
+    case SDLK_F5: return WSK_F5;
+    case SDLK_F6: return WSK_F6;
+    case SDLK_F7: return WSK_F7;
+    case SDLK_F8: return WSK_F8;
+    case SDLK_F9: return WSK_F9;
+    case SDLK_F10: return WSK_F10;
+    case SDLK_F11: return WSK_F11;
+    case SDLK_F12: return WSK_F12;
+    case SDLK_F13: return WSK_F13;
+    case SDLK_F14: return WSK_F14;
+    case SDLK_F15: return WSK_F15;
+    case SDLK_NUMLOCKCLEAR: return WSK_NUMLOCK;
+    case SDLK_CAPSLOCK: return WSK_CAPSLOCK;
+    case SDLK_SCROLLLOCK: return WSK_SCROLLOCK;
+    case SDLK_RSHIFT: return WSK_RSHIFT;
+    case SDLK_LSHIFT: return WSK_LSHIFT;
+    case SDLK_RCTRL: return WSK_RCTRL;
+    case SDLK_LCTRL: return WSK_LCTRL;
+    case SDLK_RALT: return WSK_RALT;
+    case SDLK_LALT: return WSK_LALT;
+    case SDLK_RGUI: return WSK_RMETA;
+    case SDLK_LGUI: return WSK_LMETA;
+    default: return WSK_NOT_AVAIL;
+    }
+}
 
 static winsys_display_func_t display_func = NULL;
 static winsys_idle_func_t idle_func = NULL;
@@ -48,6 +113,7 @@ static winsys_motion_func_t passive_motion_func = NULL;
 static winsys_atexit_func_t atexit_func = NULL;
 
 static bool_t redisplay = False;
+static bool_t key_repeat_enabled = False;
 
 
 /*---------------------------------------------------------------------------*/
@@ -164,7 +230,7 @@ void winsys_set_passive_motion_func( winsys_motion_func_t func )
 */
 void winsys_swap_buffers()
 {
-    SDL_GL_SwapBuffers();
+    SDL_GL_SwapWindow( window );
 }
 
 
@@ -177,7 +243,7 @@ void winsys_swap_buffers()
 */
 void winsys_warp_pointer( int x, int y )
 {
-    SDL_WarpMouse( x, y );
+    SDL_WarpMouseInWindow( window, x, y );
 }
 
 
@@ -190,46 +256,40 @@ void winsys_warp_pointer( int x, int y )
 */
 static void setup_sdl_video_mode()
 {
-    Uint32 video_flags = SDL_OPENGL; 
-    int bpp = 0;
+    Uint32 window_flags = SDL_WINDOW_OPENGL;
     int width, height;
 
+    /* Colour depth (bpp_mode) is chosen by the desktop under SDL2 */
     if ( getparam_fullscreen() ) {
-	video_flags |= SDL_FULLSCREEN;
+	window_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     } else {
-	video_flags |= SDL_RESIZABLE;
-    }
-
-    switch ( getparam_bpp_mode() ) {
-    case 0:
-	/* Use current bpp */
-	bpp = 0;
-	break;
-
-    case 1:
-	/* 16 bpp */
-	bpp = 16;
-	break;
-
-    case 2:
-	/* 32 bpp */
-	bpp = 32;
-	break;
-
-    default:
-	setparam_bpp_mode( 0 );
-	bpp = getparam_bpp_mode();
+	window_flags |= SDL_WINDOW_RESIZABLE;
     }
 
     width = getparam_x_resolution();
     height = getparam_y_resolution();
 
-    if ( ( screen = SDL_SetVideoMode( width, height, bpp, video_flags ) ) == 
-	 NULL ) 
-    {
+    window = SDL_CreateWindow( "Tux Racer",
+			       SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+			       width, height, window_flags );
+    if ( window == NULL ) {
 	handle_system_error( 1, "Couldn't initialize video: %s", 
 			     SDL_GetError() );
     }
+
+    gl_context = SDL_GL_CreateContext( window );
+    if ( gl_context == NULL ) {
+	handle_system_error( 1, "Couldn't create OpenGL context: %s", 
+			     SDL_GetError() );
+    }
+
+    /* Synchronise with the display refresh rate if possible */
+    SDL_GL_SetSwapInterval( 1 );
+
+    /* In fullscreen the real size is the desktop size */
+    SDL_GetWindowSize( window, &width, &height );
+    setparam_x_resolution( width );
+    setparam_y_resolution( height );
 }
 
 
@@ -266,7 +326,7 @@ void winsys_init( int *argc, char **argv, char *window_title,
 
     setup_sdl_video_mode();
 
-    SDL_WM_SetCaption( window_title, icon_title );
+    SDL_SetWindowTitle( window, window_title );
 
 }
 
@@ -280,6 +340,14 @@ void winsys_init( int *argc, char **argv, char *window_title,
 */
 void winsys_shutdown()
 {
+    if ( gl_context ) {
+	SDL_GL_DeleteContext( gl_context );
+	gl_context = NULL;
+    }
+    if ( window ) {
+	SDL_DestroyWindow( window );
+	window = NULL;
+    }
     SDL_Quit();
 }
 
@@ -293,12 +361,9 @@ void winsys_shutdown()
 */
 void winsys_enable_key_repeat( bool_t enabled )
 {
-    if ( enabled ) {
-	SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY,
-			     SDL_DEFAULT_REPEAT_INTERVAL );
-    } else {
-	SDL_EnableKeyRepeat( 0, 0 );
-    }
+    /* SDL2 always generates repeats; they are filtered out in
+       winsys_process_events() when disabled */
+    key_repeat_enabled = enabled;
 }
 
 
@@ -336,10 +401,27 @@ void winsys_process_events()
 	while ( SDL_PollEvent( &event ) ) {
 	    
 	    switch ( event.type ) {
+	    case SDL_QUIT:
+		winsys_exit( 0 );
+		break;
+
 	    case SDL_KEYDOWN:
-		if ( keyboard_func ) {
+		if ( event.key.repeat && !key_repeat_enabled ) {
+		    break;
+		}
+		/* Alt+Enter toggles fullscreen */
+		if ( ( event.key.keysym.sym == SDLK_RETURN ) &&
+		     ( event.key.keysym.mod & KMOD_ALT ) ) 
+		{
+		    bool_t fs = !getparam_fullscreen();
+		    setparam_fullscreen( fs );
+		    SDL_SetWindowFullscreen( window, fs ? 
+					     SDL_WINDOW_FULLSCREEN_DESKTOP : 0 );
+		    break;
+		}
+		key = translate_key( event.key.keysym.sym );
+		if ( keyboard_func && key != WSK_NOT_AVAIL ) {
 		    SDL_GetMouseState( &x, &y );
-		    key = event.key.keysym.sym; 
 		    (*keyboard_func)( key,
 				      key >= 256,
 				      False,
@@ -348,9 +430,9 @@ void winsys_process_events()
 		break;
 
 	    case SDL_KEYUP:
-		if ( keyboard_func ) {
+		key = translate_key( event.key.keysym.sym );
+		if ( keyboard_func && key != WSK_NOT_AVAIL ) {
 		    SDL_GetMouseState( &x, &y );
-		    key = event.key.keysym.sym; 
 		    (*keyboard_func)( key,
 				      key >= 256,
 				      True,
@@ -384,13 +466,14 @@ void winsys_process_events()
 		}
 		break;
 
-	    case SDL_VIDEORESIZE:
-		setup_sdl_video_mode();
-		if ( reshape_func ) {
-		    (*reshape_func)( event.resize.w,
-				     event.resize.h );
+	    case SDL_WINDOWEVENT:
+		if ( event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED &&
+		     reshape_func ) 
+		{
+		    (*reshape_func)( event.window.data1,
+				     event.window.data2 );
 		}
-		
+
 		break;
 	    }
 
@@ -398,6 +481,28 @@ void winsys_process_events()
 	    SDL_UnlockAudio();
 	}
 
+#ifdef TR_AUTOTEST
+	/* Test-only build (-DTR_AUTOTEST): presses Enter TR_AUTOKEY times,
+	   2.5 s apart, saving a screenshot in TR_SHOTDIR before each press */
+	{
+	    static Uint32 next = 3000; static int n = 0;
+	    if ( getenv( "TR_AUTOKEY" ) && n < atoi( getenv( "TR_AUTOKEY" ) ) &&
+		 SDL_GetTicks() > next ) 
+	    {
+		extern char* take_screenshot( char* );
+		char f[1024];
+		next = SDL_GetTicks() + 2500; n++;
+		if ( getenv( "TR_SHOTDIR" ) ) {
+		    snprintf( f, sizeof f, "%s/shot%d.ppm", getenv( "TR_SHOTDIR" ), n );
+		    take_screenshot( f );
+		}
+		if ( keyboard_func ) {
+		    (*keyboard_func)( 13, False, False, 0, 0 );
+		    (*keyboard_func)( 13, False, True, 0, 0 );
+		}
+	    }
+	}
+#endif
 	if ( redisplay && display_func ) {
 	    redisplay = False;
 	    (*display_func)();
