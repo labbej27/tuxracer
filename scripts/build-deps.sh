@@ -5,9 +5,11 @@
 set -eu
 PLATFORM=$1
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# Build outputs live outside the source tree (which may be synced by iCloud)
+OUT=${TR_BUILD_ROOT:-$ROOT/out}
 DEPS=$ROOT/deps
-PREFIX=$ROOT/deps-prefix/$PLATFORM
-WORK=$ROOT/build-deps/$PLATFORM
+PREFIX=$OUT/deps-prefix/$PLATFORM
+WORK=$OUT/build-deps/$PLATFORM
 JOBS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
 mkdir -p "$PREFIX" "$WORK"
 
@@ -68,7 +70,16 @@ if [ ! -f "$PREFIX/.tcl" ]; then
       ;;
   esac
   make -j "$JOBS" binaries
-  make install-binaries install-headers 2>/dev/null || make install-libraries install-headers
+  if [ "$PLATFORM" = windows ]; then
+    # "make install" needs a native tclsh; copy the library and headers
+    mkdir -p "$PREFIX/lib" "$PREFIX/include"
+    cp libtcl86*.a "$PREFIX/lib/"
+    cp "$DEPS"/tcl8.6.16/generic/tcl.h "$DEPS"/tcl8.6.16/generic/tclDecls.h \
+       "$DEPS"/tcl8.6.16/generic/tclPlatDecls.h "$DEPS"/tcl8.6.16/generic/tclTomMath.h \
+       "$DEPS"/tcl8.6.16/generic/tclTomMathDecls.h "$PREFIX/include/"
+  else
+    make install-binaries install-headers
+  fi
   touch "$PREFIX/.tcl"
 fi
 echo "deps OK -> $PREFIX"

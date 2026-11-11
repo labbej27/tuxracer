@@ -1,0 +1,46 @@
+TUX RACER 0.61 (recompilé, SDL2)
+================================
+
+Tux Racer est un jeu libre (GPL v2) créé en 2000-2001 par Jasmin F. Patry
+et Sunspire Studios. Tux, la mascotte de Linux, dévale des pistes enneigées
+en ramassant des harengs.
+
+Cette version est la 0.61 d'origine, recompilée en 2026 pour les systèmes
+actuels : portage de SDL 1.2 vers SDL2, binaires 64 bits autonomes.
+
+LANCER LE JEU
+-------------
+  macOS   : double-cliquer sur « Tux Racer.app ».
+            Si macOS refuse de l'ouvrir : clic droit > Ouvrir, ou
+            Réglages Système > Confidentialité et sécurité > Ouvrir quand même.
+  Windows : double-cliquer sur tuxracer.exe (garder le dossier « data » à côté).
+            Si SmartScreen s'affiche : « Informations complémentaires »
+            puis « Exécuter quand même ».
+  Linux   : ./tuxracer depuis ce dossier (garder « data » à côté).
+            Nécessite libGL et libGLU (déjà présentes sur la plupart des
+            bureaux ; sinon : sudo apt install libglu1-mesa).
+
+COMMANDES
+---------
+  Gauche / Droite (ou J / L)  : tourner
+  Haut (ou I)                 : pagayer pour accélérer
+  Bas, Espace (ou K)          : freiner
+  E                           : sauter (maintenir pour charger le saut)
+  D + direction en l'air      : figures
+  P                           : pause
+  Q / Échap                   : quitter la course
+  Retour arrière              : replacer Tux sur la piste
+  1 2 3                       : changer de caméra
+  Alt+Entrée                  : basculer plein écran / fenêtre (ajout de cette version)
+
+Le jeu démarre en plein écran. Les réglages se changent dans le menu
+Configuration ou dans le fichier d'options :
+  macOS / Linux : ~/.tuxracer/options
+  Windows       : %APPDATA%\TuxRacer\options.txt
+
+CODE SOURCE ET LICENCE
+----------------------
+Licence GNU GPL v2 (voir COPYING). Source d'origine :
+https://tuxracer.sourceforge.net/ . Le code source modifié de cette version
+(portage SDL2, scripts de compilation) est fourni avec ce paquet
+(tuxracer-0.61-sdl2-src.tar.gz) ou disponible sur demande.

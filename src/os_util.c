@@ -19,7 +19,7 @@
 
 #include "tuxracer.h"
 
-#if defined( COMPILER_IS_UNIX_COMPATIBLE )
+#if defined( COMPILER_IS_UNIX_COMPATIBLE ) && !defined( WIN32 )
 #   include <sys/utsname.h>
 #endif
 

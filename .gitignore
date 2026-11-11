@@ -4,3 +4,4 @@ build*/
 dist/
 deps-prefix/
 *.log
+out/

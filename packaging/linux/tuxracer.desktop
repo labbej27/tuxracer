@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Tux Racer
+Comment=Tux dévale les pistes enneigées
+Exec=tuxracer
+Icon=tuxracer
+Categories=Game;ArcadeGame;

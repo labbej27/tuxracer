@@ -76,7 +76,7 @@ Pic *PicOpen(const char *filename, short width, short height)
 		"ERROR: PicOpen() - `%d' is an invalid number of scanlines.\n",
 		height);
 
-    } else if (! (fptr = fopen(filename, "w"))) {
+    } else if (! (fptr = fopen(filename, "wb"))) {
 	fprintf(stderr,
 		"ERROR: PicOpen() - couldn't open file `%s' for writing.\n",
 		filename);

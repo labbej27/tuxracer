@@ -43,7 +43,11 @@ char* take_screenshot ( char* filename ) {
     scanline = PixelAlloc(viewport[2]);
 
     ppmFile = PicOpen( filename, viewport[2], viewport[3] );
+#ifdef TR_AUTOTEST
+    glReadBuffer( GL_BACK );  /* front buffer is unreliable under Xvfb */
+#else
     glReadBuffer( GL_FRONT );
+#endif
 
     for (i=viewport[3]-1; i>=0; i--) {
         glReadPixels(viewport[0], viewport[1]+i, viewport[2], 1, GL_RGB, 

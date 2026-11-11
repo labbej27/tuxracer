@@ -154,7 +154,7 @@ void init_high_scores( void )
 
     score_table = create_hash_table();
     if ( get_high_score_file_name( score_file, sizeof(score_file) ) == 0 ) {
-	score_stream = fopen( score_file, "r" );
+	score_stream = fopen( score_file, "rb" );
 	if (score_stream != NULL) {
 	    while (fread( &this_score, sizeof(this_score), 1, score_stream)) {
 		set_high_score( this_score.event.event, this_score.event.cup,
@@ -220,7 +220,7 @@ void write_high_scores( void )
     char score_file[BUFF_LEN];
 
     if ( get_high_score_file_name( score_file, sizeof(score_file) ) == 0 ) {
-	score_stream = fopen( score_file, "w" );
+	score_stream = fopen( score_file, "wb" );
 	begin_hash_scan( score_table, &score_scan_ptr );
 	while ( next_hash_entry( score_scan_ptr, &event_name, (hash_entry_t*)&cup_table ) ) {
 	    begin_hash_scan( *cup_table, &cup_scan_ptr );
@@ -306,7 +306,7 @@ void init_saved_games( void )
 		     dir_name,
 		     cur_dir_filename );
 
-	    save_stream = fopen( file_name, "r" );
+	    save_stream = fopen( file_name, "rb" );
 
 	    if ( fread( magic, sizeof(magic), 1, save_stream ) != 1 ||
 		 strncmp( magic, SAVE_MAGIC_V1, sizeof(magic) ) != 0 ) 
@@ -541,7 +541,7 @@ static void truncate_and_init_save_file( char *player_name )
     if ( get_save_game_file_name( save_file, player_name, 
 				  sizeof(save_file) ) == 0 ) 
     {
-	save_stream = fopen( save_file, "w" );
+	save_stream = fopen( save_file, "wb" );
 	if ( save_stream == NULL ) {
 	    print_warning( IMPORTANT_WARNING,
 			   "Couldn't open `%s' for writing: %s",
