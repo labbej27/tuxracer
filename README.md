@@ -1,12 +1,57 @@
 # Tux Racer 0.61 — SDL2
 
-Tux Racer 0.61 (2001, Jasmin F. Patry / Sunspire Studios, GPL v2) recompilé
-pour macOS (universel arm64 + x86_64), Windows x64 et Linux x86-64.
+**Tux Racer 0.61 (2001) recompilé pour aujourd'hui : macOS (Apple Silicon et Intel),
+Windows 10/11 x64 et Linux x86-64.**
+*Tux Racer 0.61 rebuilt for today's macOS, Windows and Linux (SDL2 port).*
+
+![Tux Racer en course](docs/course.png)
+
+Tux Racer est un jeu libre créé par Jasmin F. Patry et Sunspire Studios :
+Tux, la mascotte de Linux, dévale des pistes enneigées en ramassant des harengs.
+Les binaires de l'époque ne sont plus téléchargeables et ne tournent plus sur
+les systèmes actuels. Ce dépôt reprend la version 0.61 d'origine et la porte
+sur SDL2, sans rien changer au jeu.
+
+Portage non officiel. « Tux Racer » est une marque de Jasmin F. Patry.
+
+## Télécharger
+
+Dans les [Releases](https://github.com/labbej27/tuxracer/releases) :
+
+| Système | Fichier |
+|---|---|
+| macOS 11+ (universel arm64 + x86_64) | `TuxRacer-0.61-sdl2-macOS.zip` |
+| Windows 10/11 x64 | `TuxRacer-0.61-sdl2-Windows-x64.zip` |
+| Linux x86-64 (glibc 2.35+, libGLU) | `TuxRacer-0.61-sdl2-Linux-x86_64.tar.gz` |
+
+Les applications ne sont pas signées : sur Mac, clic droit > Ouvrir au premier
+lancement ; sur Windows, « Informations complémentaires » > « Exécuter quand
+même ». Sous Linux, `libglu1-mesa` si `libGLU.so.1` manque.
+
+| | |
+|---|---|
+| ![Écran titre](docs/titre.png) | ![Menu](docs/menu.png) |
+| ![Ligne de départ](docs/depart.png) | ![Course](docs/course.png) |
+
+## Commandes
+
+Gauche/Droite tourner, Haut pagayer, Bas ou Espace freiner, E sauter
+(maintenir pour charger), D + direction en l'air pour les figures, P pause,
+Q ou Échap quitter, Retour arrière replacer Tux, 1 2 3 caméras,
+Alt+Entrée plein écran / fenêtre.
+
+## Crédits
+
+Jeu : Jasmin F. Patry, Patrick Gilhuly, Eric Hall, Rick Knowles, Vincent Ma,
+Mark Riddell (Sunspire Studios) et les contributeurs listés dans
+[AUTHORS](AUTHORS). Musique : Joseph Toscano. Licence : GNU GPL v2
+([COPYING](COPYING)).
+
+## Ce qui a changé
 
 Le premier commit contient le source et les données d'origine
 (https://tuxracer.sourceforge.net/). Les commits suivants regroupent le portage.
 
-## Changements par rapport à la 0.61
 - SDL 1.2 → SDL2 / SDL2_mixer (fenêtre, contexte OpenGL, clavier, joystick,
   musique .it via libxmp), Alt+Entrée bascule le plein écran.
 - Données cherchées à côté de l'exécutable (`data/`, ou

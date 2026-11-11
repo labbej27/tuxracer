@@ -40,7 +40,8 @@ Configuration ou dans le fichier d'options :
 
 CODE SOURCE ET LICENCE
 ----------------------
-Licence GNU GPL v2 (voir COPYING). Source d'origine :
-https://tuxracer.sourceforge.net/ . Le code source modifié de cette version
-(portage SDL2, scripts de compilation) est fourni avec ce paquet
-(tuxracer-0.61-sdl2-src.tar.gz) ou disponible sur demande.
+Licence GNU GPL v2 (voir COPYING). Portage non officiel ; « Tux Racer »
+est une marque de Jasmin F. Patry. Source d'origine :
+https://tuxracer.sourceforge.net/
+Code source de cette version (portage SDL2, scripts de compilation) :
+https://github.com/labbej27/tuxracer
