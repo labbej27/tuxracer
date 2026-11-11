@@ -78,6 +78,7 @@
 /* SDL2 port: the data directory is looked up at run time next to the
    executable ("data" folder; Contents/Resources/data in a macOS bundle) */
 static char default_data_dir[BUFF_LEN];
+static bool_t data_dir_next_to_exe = False;
 
 static char *get_default_data_dir()
 {
@@ -91,8 +92,9 @@ static char *get_default_data_dir()
 	snprintf( default_data_dir, sizeof( default_data_dir ), 
 		  "%sdata", base );
 	SDL_free( base );
+	data_dir_next_to_exe = dir_exists( default_data_dir );
     }
-    if ( base == NULL || !dir_exists( default_data_dir ) ) {
+    if ( !data_dir_next_to_exe ) {
 #ifdef DATA_DIR
 	snprintf( default_data_dir, sizeof( default_data_dir ), "%s", DATA_DIR );
 #else
@@ -102,11 +104,13 @@ static char *get_default_data_dir()
     return default_data_dir;
 }
 
-/* Called after the configuration file has been read: an options file
-   written by another copy of the game may point to a stale location */
+/* Called after the configuration file has been read: the data shipped
+   next to the executable always wins, since an options file may point to
+   a stale or relative location (the game folder may have been moved) */
 void fix_data_dir()
 {
-    if ( !dir_exists( getparam_data_dir() ) ) {
+    get_default_data_dir();
+    if ( data_dir_next_to_exe || !dir_exists( getparam_data_dir() ) ) {
 	setparam_data_dir( get_default_data_dir() );
     }
 }

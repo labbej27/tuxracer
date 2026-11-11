@@ -147,6 +147,14 @@ int main( int argc, char **argv )
     /* Don't support multiplayer, yet... */
     g_game.num_players = 1;
 
+    /* Initialise Tcl (encodings, executable name).  Without this the
+       statically linked Tcl assumes ISO-8859-1 and mangles non-ASCII
+       paths such as ~/Téléchargements */
+    Tcl_FindExecutable( argv[0] );
+#if !defined( WIN32 )
+    Tcl_SetSystemEncoding( NULL, "utf-8" );
+#endif
+
     /* Create a Tcl interpreter */
     g_game.tcl_interp = Tcl_CreateInterp();
 

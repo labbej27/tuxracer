@@ -5,3 +5,4 @@ dist/
 deps-prefix/
 *.log
 out/
+.DS_Store
